@@ -1,17 +1,24 @@
-class QueryChain {
-  private queue: any[];
+import ow from 'ow';
 
-  constructor(queue: any[]) {
-    this.queue = queue;
+class QueryChain {
+  private task: Promise<any>;
+
+  constructor(task: Promise<any>) {
+    ow(task, ow.promise);
+    this.task = task;
   }
 
-  public exec(defaults: any) {
-    return Promise.all(this.queue).then(data => {
-      const documents = Array.isArray(data) ? data : [data];
-      return documents.map((document) => {
-        return { ...defaults, ...document }; 
-      });
-    })
+  public exec(defaults: any = {}): Promise<any> {
+    ow(defaults, ow.object.plain);
+    return this.task.then(data => {
+      if (Array.isArray(data)) {
+        return data.map(document => {
+          return { ...defaults, ...document };
+        });
+      } else if (typeof data === 'object') {
+        return { ...defaults, ...data };
+      }
+    });
   }
 }
 
