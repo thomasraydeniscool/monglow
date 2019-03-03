@@ -1,13 +1,35 @@
 {
   "name": "monglow",
   "version": "1.1.1",
-  "description": "MongoDB driver",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "description": "A MongoDB ODM designed for NoSQL",
+  "main": "dist",
+  "types": "dist",
+  "files": [
+		"dist"
+  ],
   "scripts": {
     "prepare": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc"
   },
+  "keywords": [
+		"mongodb",
+		"nosql",
+		"odm",
+		"schemaless",
+		"database",
+		"document",
+		"model",
+		"data",
+		"datastore",
+		"query",
+		"db",
+		"defaults",
+		"default",
+		"wrapper",
+		"native"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thomasraydeniscool/monglow.git"
@@ -17,7 +39,7 @@
   "bugs": {
     "url": "https://github.com/thomasraydeniscool/monglow/issues"
   },
-  "homepage": "https://github.com/thomasraydeniscool/monglow#readme",
+  "homepage": "https://github.com/thomasraydeniscool/monglow",
   "devDependencies": {
     "@types/jest": "24.0.9",
     "@types/mongodb": "^3.1.19",
