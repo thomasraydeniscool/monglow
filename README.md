@@ -1,2 +1,2 @@
 # monglow
-MongoDB driver
+A MongoDB ODM designed for NoSQL
