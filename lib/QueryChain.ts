@@ -1,4 +1,4 @@
-export class QueryChain {
+class QueryChain {
   private queue: any[];
 
   constructor(queue: any[]) {
@@ -14,3 +14,5 @@ export class QueryChain {
     })
   }
 }
+
+export default QueryChain;
