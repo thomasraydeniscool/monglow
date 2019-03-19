@@ -1,12 +1,12 @@
 import ow from 'ow';
-import { Collection, Db } from 'mongodb';
+import { Collection, Db, MongoClient } from 'mongodb';
 import QueryChain from './QueryChain';
 
 class Model {
   public static create(name: string, db: Db) {
     ow(name, ow.string);
     ow(db, ow.object.instanceOf(Db));
-    return new Model(name).attach(db);
+    return new Model(name).setDatabase(db);
   }
 
   private _collection!: Collection;
@@ -25,7 +25,14 @@ class Model {
     return this._name;
   }
 
-  public attach(db: Db) {
+  public init(instance: Promise<MongoClient>) {
+    instance.then(client => {
+      this.setDatabase(client.db());
+    });
+    return this;
+  }
+
+  public setDatabase(db: Db) {
     ow(db, ow.object.instanceOf(Db));
     this._collection = db.collection(this._name);
     return this;
