@@ -60,9 +60,11 @@ class Monglow {
     }
   }
 
-  public model(name: string): Model {
+  public model(name: string): Promise<Model> {
     ow(name, ow.string);
-    return Model.create(name, this.client.db());
+    return this.instance.then(client => {
+      return Model.create(name, client.db());
+    });
   }
 
   public activate(model: Model): Model {
