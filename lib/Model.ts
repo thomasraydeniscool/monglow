@@ -47,6 +47,19 @@ class Model {
     ow(where, ow.object.plain);
     return new QueryChain(this.collection.findOne(where));
   }
+
+  public updateOne(filter: any, set: any) {
+    ow(filter, ow.object.plain);
+    ow(set, ow.object.plain);
+    const update = { $set: { ...set, updatedAt: new Date().toISOString() } };
+    return this.collection.updateOne(filter, update);
+  }
+
+  public insertOne(document: any) {
+    ow(document, ow.object.plain);
+    const insert = { ...document, createdAt: new Date().toISOString() };
+    return this.collection.insertOne(insert);
+  }
 }
 
 export default Model;
