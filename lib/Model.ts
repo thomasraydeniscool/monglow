@@ -2,6 +2,8 @@ import ow from 'ow';
 import { Collection, Db, MongoClient } from 'mongodb';
 import QueryChain from './QueryChain';
 
+const ISODate = () => new Date(new Date().toISOString());
+
 class Model {
   public static create(name: string, db: Db) {
     ow(name, ow.string);
@@ -51,7 +53,7 @@ class Model {
   public updateOne(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
-    const update = { $set: { ...set, updatedAt: Date.now() } };
+    const update = { $set: { ...set, updatedAt: ISODate() } };
     return this.collection.updateOne(filter, update);
   }
 
@@ -59,8 +61,8 @@ class Model {
     ow(document, ow.object.plain);
     const insert = {
       ...document,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+      createdAt: ISODate(),
+      updatedAt: ISODate()
     };
     return this.collection.insertOne(insert);
   }
