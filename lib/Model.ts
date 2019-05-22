@@ -51,13 +51,17 @@ class Model {
   public updateOne(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
-    const update = { $set: { ...set, updatedAt: new Date().toISOString() } };
+    const update = { $set: { ...set, updatedAt: Date.now() } };
     return this.collection.updateOne(filter, update);
   }
 
   public insertOne(document: any) {
     ow(document, ow.object.plain);
-    const insert = { ...document, createdAt: new Date().toISOString() };
+    const insert = {
+      ...document,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
     return this.collection.insertOne(insert);
   }
 }
