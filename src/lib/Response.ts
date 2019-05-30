@@ -2,10 +2,7 @@ import ow from 'ow';
 import MonglowDocument from './Document';
 
 class MonglowResponse {
-  public static async create(
-    task: Promise<any>,
-    wrap = false
-  ): Promise<MonglowResponse | MonglowDocument> {
+  public static async create(task: Promise<any>, wrap = false) {
     ow(task, ow.promise);
     const data = await task;
     if (Array.isArray(data)) {
