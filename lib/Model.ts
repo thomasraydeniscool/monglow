@@ -1,16 +1,10 @@
 import ow from 'ow';
-import { Collection, Db, MongoClient } from 'mongodb';
-import QueryChain from './QueryChain';
+import { Collection, Db, MongoClient, ObjectId } from 'mongodb';
 
-const ISODate = () => new Date(new Date().toISOString());
+import MonglowResponse from './Response';
+import { ISODate, cast } from './util';
 
 class Model {
-  public static create(name: string, db: Db) {
-    ow(name, ow.string);
-    ow(db, ow.object.instanceOf(Db));
-    return new Model(name).setDatabase(db);
-  }
-
   private _collection!: Collection;
   private _name: string;
 
@@ -40,31 +34,58 @@ class Model {
     return this;
   }
 
-  public find(where = {}) {
-    ow(where, ow.object.plain);
-    return new QueryChain(this.collection.find(where).toArray());
+  public find(filter = {}) {
+    ow(filter, ow.object.plain);
+    return MonglowResponse.create(
+      this.collection.find(cast(filter)).toArray(),
+      true
+    );
   }
 
-  public findOne(where = {}) {
-    ow(where, ow.object.plain);
-    return new QueryChain(this.collection.findOne(where));
+  public findOne(filter = {}) {
+    ow(filter, ow.object.plain);
+    return MonglowResponse.create(this.collection.findOne(cast(filter)));
+  }
+
+  public findById(id: string | ObjectId) {
+    ow(id, ow.any(ow.string, ow.object.instanceOf(ObjectId)));
+    return this.findOne({ _id: id });
   }
 
   public updateOne(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
     const update = { $set: { ...set, updatedAt: ISODate() } };
-    return this.collection.updateOne(filter, update);
+    return this.collection.updateOne(cast(filter), update);
+  }
+
+  public updateMany(filter: any, set: any) {
+    ow(filter, ow.object.plain);
+    ow(set, ow.object.plain);
+    const update = { $set: { ...set, updatedAt: ISODate() } };
+    return this.collection.updateMany(cast(filter), update);
   }
 
   public insertOne(document: any) {
     ow(document, ow.object.plain);
-    const insert = {
+    const insert = cast({
       ...document,
       createdAt: ISODate(),
       updatedAt: ISODate()
-    };
+    });
     return this.collection.insertOne(insert);
+  }
+
+  public insertMany(documents: any[]) {
+    ow(documents, ow.array);
+    const insert = documents.map(document => {
+      return cast({
+        ...document,
+        createdAt: ISODate(),
+        updatedAt: ISODate()
+      });
+    });
+    return this.collection.insertMany(insert);
   }
 }
 
