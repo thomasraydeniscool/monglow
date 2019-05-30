@@ -2,7 +2,7 @@ import ow from 'ow';
 import { Collection, Db, MongoClient, ObjectId } from 'mongodb';
 
 import MonglowResponse from './Response';
-import { ISODate, cast } from './util';
+import { ISODate, cast } from './utils';
 
 class Model {
   private _collection!: Collection;
@@ -71,7 +71,7 @@ class Model {
     const insert = cast({
       ...document,
       createdAt: ISODate(),
-      updatedAt: ISODate()
+      updatedAt: ISODate(),
     });
     return this.collection.insertOne(insert);
   }
@@ -82,7 +82,7 @@ class Model {
       return cast({
         ...document,
         createdAt: ISODate(),
-        updatedAt: ISODate()
+        updatedAt: ISODate(),
       });
     });
     return this.collection.insertMany(insert);

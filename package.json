@@ -3,17 +3,14 @@
   "version": "2.0.1",
   "description": "A MongoDB ODM designed for NoSQL",
   "main": "dist/index.js",
-  "umd:main": "dist/monglow.umd.production.js",
-  "module": "dist/monglow.es.production.js",
   "typings": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "prepare": "npm run build",
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test"
+    "build": "tsc",
+    "test": "jest"
   },
   "peerDependencies": {},
   "husky": {
@@ -31,15 +28,17 @@
     "@types/jest": "24.0.13",
     "@types/mongodb": "3.1.27",
     "husky": "2.3.0",
+    "jest": "24.8.0",
     "prettier": "1.17.1",
     "pretty-quick": "1.11.0",
-    "tsdx": "0.6.0",
-    "tslib": "1.9.3",
+    "ts-jest": "24.0.2",
+    "tslint": "5.16.0",
+    "tslint-config-prettier": "1.18.0",
     "typescript": "3.5.1"
   },
   "dependencies": {
-    "mongodb": "3.2.6",
-    "ow": "0.13.2"
+    "mongodb": "^3.2.6",
+    "ow": "^0.13.2"
   },
   "keywords": [
     "mongodb",
@@ -67,5 +66,8 @@
   "bugs": {
     "url": "https://github.com/thomasraydeniscool/monglow/issues"
   },
-  "homepage": "https://github.com/thomasraydeniscool/monglow"
+  "homepage": "https://github.com/thomasraydeniscool/monglow",
+  "engines": {
+    "node": ">=6.17.1"
+  }
 }
