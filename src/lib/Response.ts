@@ -4,7 +4,7 @@ import MonglowDocument from './Document';
 class MonglowResponse {
   public static async create(
     task: Promise<any>,
-    wrap: false
+    wrap?: false
   ): Promise<MonglowDocument>;
   public static async create(
     task: Promise<any>,
@@ -12,7 +12,7 @@ class MonglowResponse {
   ): Promise<MonglowResponse>;
   public static async create(
     task: Promise<any[]>,
-    wrap: false
+    wrap?: false
   ): Promise<MonglowResponse>;
   public static async create(task: Promise<any>, wrap = false) {
     ow(task, ow.promise);
