@@ -1,8 +1,12 @@
 import ow from 'ow';
-import { Collection, Db, MongoClient, ObjectId } from 'mongodb';
+import { Collection, Db, MongoClient, ObjectId, FindOneOptions } from 'mongodb';
 
 import MonglowResponse from './Response';
 import { ISODate, cast } from './utils';
+
+interface IMonglowQueryOptions extends FindOneOptions {
+  rawCursor: boolean;
+}
 
 class Model {
   private _collection!: Collection;
@@ -34,22 +38,43 @@ class Model {
     return this;
   }
 
-  public find(filter = {}) {
+  public find(filter = {}, options?: IMonglowQueryOptions) {
     ow(filter, ow.object.plain);
+    ow(options, ow.any(ow.object.plain, ow.undefined));
+    if (options && options.rawCursor) {
+      const _options = { ...options };
+      delete _options.rawCursor;
+      return MonglowResponse.create(
+        this.collection.find(cast(filter), _options).toArray(),
+        { wrap: true, cursor: true }
+      );
+    }
     return MonglowResponse.create(
-      this.collection.find(cast(filter)).toArray(),
-      true
+      this.collection.find(cast(filter), options).toArray(),
+      { wrap: true }
     );
   }
 
-  public findOne(filter = {}) {
+  public findOne(filter = {}, options?: IMonglowQueryOptions) {
     ow(filter, ow.object.plain);
-    return MonglowResponse.create(this.collection.findOne(cast(filter)));
+    ow(options, ow.any(ow.object.plain, ow.undefined));
+    if (options && options.rawCursor) {
+      const _options = { ...options };
+      delete _options.rawCursor;
+      return MonglowResponse.create(
+        this.collection.findOne(cast(filter), _options),
+        { cursor: true }
+      );
+    }
+    return MonglowResponse.create(
+      this.collection.findOne(cast(filter), options)
+    );
   }
 
-  public findById(id: string | ObjectId) {
+  public findById(id: string | ObjectId, options?: IMonglowQueryOptions) {
     ow(id, ow.any(ow.string, ow.object.instanceOf(ObjectId)));
-    return this.findOne({ _id: id });
+    ow(options, ow.any(ow.object.plain, ow.undefined));
+    return this.findOne({ _id: id }, options);
   }
 
   public updateOne(filter: any, set: any) {

@@ -4,22 +4,32 @@ import MonglowDocument from './Document';
 class MonglowResponse {
   public static async create(
     task: Promise<any>,
-    wrap?: false
+    options?: { wrap?: boolean; cursor?: boolean }
   ): Promise<MonglowDocument>;
   public static async create(
-    task: Promise<any>,
-    wrap: true
+    task: Promise<any[]>,
+    options?: { wrap?: boolean; cursor?: boolean }
   ): Promise<MonglowResponse>;
   public static async create(
-    task: Promise<any[]>,
-    wrap?: false
+    task: Promise<any>,
+    options: { wrap: true; cursor?: boolean }
   ): Promise<MonglowResponse>;
-  public static async create(task: Promise<any>, wrap = false) {
+  public static async create(
+    task: Promise<any>,
+    options: { wrap?: boolean; cursor?: boolean } = {
+      wrap: false,
+      cursor: false,
+    }
+  ) {
     ow(task, ow.promise);
+    ow(options, ow.object.plain);
+    if (options.cursor) {
+      return task;
+    }
     const data = await task;
     if (Array.isArray(data)) {
       return new MonglowResponse(data);
-    } else if (wrap) {
+    } else if (options.wrap) {
       return new MonglowResponse(data);
     } else {
       return new MonglowDocument(data);
