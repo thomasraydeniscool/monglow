@@ -5,7 +5,7 @@ import {
   MaxKey,
   DBRef,
   Long,
-  MongoClientOptions,
+  MongoClientOptions
 } from 'mongodb';
 
 import Monglow from './lib/Monglow';
