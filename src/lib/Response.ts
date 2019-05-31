@@ -50,7 +50,7 @@ class MonglowResponse {
   private docs: MonglowDocument[];
 
   private constructor(data: any) {
-    ow(data, ow.object.plain);
+    ow(data, ow.any(ow.array, ow.object.plain));
     this.docs = Array.isArray(data)
       ? data.map(d => new MonglowDocument(d))
       : [new MonglowDocument(data)];
