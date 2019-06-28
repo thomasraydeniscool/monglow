@@ -70,14 +70,14 @@ class Model {
     if (options.rawCursor) {
       return cursor;
     }
-    return cursor.toArray().then(data => new MonglowResponse(data));
+    return cursor.toArray().then(data => MonglowResponse.create(data));
   }
 
   public findOne(filter = {}, options?: FindOneOptions) {
     ow(filter, ow.object.plain);
     ow(options, ow.any(ow.object.plain, ow.undefined));
     const task = this.collection.findOne(cast(filter), options);
-    return task.then(data => new MonglowDocument(data));
+    return task.then(data => MonglowDocument.create(data));
   }
 
   public findById(id: string | ObjectId, options?: FindOneOptions) {

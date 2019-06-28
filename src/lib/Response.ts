@@ -2,13 +2,17 @@ import ow from 'ow';
 import MonglowDocument from './Document';
 
 class MonglowResponse {
+  public static create(data: any) {
+    return new MonglowResponse(data);
+  }
+
   private docs: MonglowDocument[];
 
-  constructor(data: any) {
+  private constructor(data: any) {
     ow(data, ow.any(ow.array, ow.object.plain));
     this.docs = Array.isArray(data)
-      ? data.map(d => new MonglowDocument(d))
-      : [new MonglowDocument(data)];
+      ? data.map(d => MonglowDocument.create(d))
+      : [MonglowDocument.create(data)];
   }
 
   public toArray(defaults = {}) {
