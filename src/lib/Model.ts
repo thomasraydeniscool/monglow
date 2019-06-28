@@ -1,22 +1,16 @@
 import ow from 'ow';
-import { Collection, Db, MongoClient, ObjectId, FindOneOptions } from 'mongodb';
+import {
+  Collection,
+  Db,
+  MongoClient,
+  ObjectId,
+  FindOneOptions,
+  Cursor
+} from 'mongodb';
 
 import MonglowResponse from './Response';
 import { ISODate, cast } from './utils';
-
-export interface IMonglowQueryOptions {
-  rawCursor?: boolean;
-  options?: FindOneOptions;
-}
-
-export const isMonglowQueryOptions = (
-  options: IMonglowQueryOptions | FindOneOptions
-): options is IMonglowQueryOptions => {
-  return (
-    (options as IMonglowQueryOptions).rawCursor !== undefined ||
-    (options as IMonglowQueryOptions).options !== undefined
-  );
-};
+import MonglowDocument from './Document';
 
 class Model {
   private _collection!: Collection;
@@ -49,34 +43,41 @@ class Model {
     return this;
   }
 
-  public find(filter = {}, options?: IMonglowQueryOptions | FindOneOptions) {
-    ow(filter, ow.object.plain);
+  public find(
+    query: any,
+    findOptions: FindOneOptions,
+    options: { rawCursor: true }
+  ): Cursor<any>;
+  public find(
+    query: any,
+    findOptions: FindOneOptions,
+    options: { rawCursor: false }
+  ): Promise<MonglowResponse>;
+  public find(
+    query?: any,
+    findOptions?: FindOneOptions,
+    options?: { rawCursor?: boolean }
+  ): Promise<MonglowResponse>;
+  public find(
+    query = {},
+    findOptions: FindOneOptions = {},
+    options: { rawCursor?: boolean } = {}
+  ) {
+    ow(query, ow.object.plain);
+    ow(findOptions, ow.any(ow.object.plain, ow.undefined));
     ow(options, ow.any(ow.object.plain, ow.undefined));
-    if (options && isMonglowQueryOptions(options)) {
-      const { rawCursor = false, options: opt } = options;
-      if (rawCursor) {
-        return MonglowResponse.fromCursor(
-          this.collection.find(cast(filter), opt),
-          { cursor: true }
-        );
-      } else {
-        return MonglowResponse.fromCursor(
-          this.collection.find(cast(filter), opt)
-        );
-      }
-    } else {
-      return MonglowResponse.fromCursor(
-        this.collection.find(cast(filter), options)
-      );
+    const cursor = this.collection.find(query, findOptions);
+    if (options.rawCursor) {
+      return cursor;
     }
+    return cursor.toArray().then(data => new MonglowResponse(data));
   }
 
   public findOne(filter = {}, options?: FindOneOptions) {
     ow(filter, ow.object.plain);
     ow(options, ow.any(ow.object.plain, ow.undefined));
-    return MonglowResponse.fromPromise(
-      this.collection.findOne(cast(filter), options)
-    );
+    const task = this.collection.findOne(cast(filter), options);
+    return task.then(data => new MonglowDocument(data));
   }
 
   public findById(id: string | ObjectId, options?: FindOneOptions) {
@@ -89,14 +90,18 @@ class Model {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
     const update = { $set: { ...set, updatedAt: ISODate() } };
-    return this.collection.updateOne(cast(filter), update);
+    return this.collection
+      .updateOne(cast(filter), update)
+      .then(response => response.result);
   }
 
   public updateMany(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
     const update = { $set: { ...set, updatedAt: ISODate() } };
-    return this.collection.updateMany(cast(filter), update);
+    return this.collection
+      .updateMany(cast(filter), update)
+      .then(response => response.result);
   }
 
   public insertOne(document: any) {
@@ -106,7 +111,7 @@ class Model {
       createdAt: ISODate(),
       updatedAt: ISODate()
     });
-    return this.collection.insertOne(insert);
+    return this.collection.insertOne(insert).then(response => response.result);
   }
 
   public insertMany(documents: any[]) {
@@ -118,7 +123,7 @@ class Model {
         updatedAt: ISODate()
       });
     });
-    return this.collection.insertMany(insert);
+    return this.collection.insertMany(insert).then(response => response.result);
   }
 }
 
