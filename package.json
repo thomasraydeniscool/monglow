@@ -1,6 +1,6 @@
 {
   "name": "monglow",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "A MongoDB ODM designed for NoSQL",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
