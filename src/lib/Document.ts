@@ -4,7 +4,7 @@ class MonglowDocument {
   private data: any;
 
   constructor(data: any) {
-    ow(data, ow.object.plain);
+    ow(data, ow.any(ow.object.plain, ow.null, ow.undefined));
     this.data = data;
   }
 
