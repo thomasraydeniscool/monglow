@@ -9,7 +9,7 @@ export interface MonglowCasted {
 
 export const cast = (document: any): MonglowCasted => {
   const casted = { ...document };
-  if (casted._id != null) {
+  if (typeof casted._id === 'string') {
     casted._id = new ObjectId(casted._id);
   }
   return casted;
