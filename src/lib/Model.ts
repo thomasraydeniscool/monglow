@@ -1,7 +1,7 @@
 import ow from 'ow';
 import { Collection, Db, MongoClient, ObjectId, FindOneOptions } from 'mongodb';
 
-import { ISODate, cast } from './utils';
+import { cast, timestamp } from './utils';
 
 class Model {
   private _collection!: Collection;
@@ -56,7 +56,7 @@ class Model {
   public updateOne(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
-    const update = { $set: { ...set, updatedAt: ISODate() } };
+    const update = { $set: timestamp(set) };
     return this.collection
       .updateOne(cast(filter), update)
       .then(response => response.result);
@@ -65,7 +65,7 @@ class Model {
   public updateMany(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
-    const update = { $set: { ...set, updatedAt: ISODate() } };
+    const update = { $set: timestamp(set) };
     return this.collection
       .updateMany(cast(filter), update)
       .then(response => response.result);
@@ -73,23 +73,13 @@ class Model {
 
   public insertOne(document: any) {
     ow(document, ow.object.plain);
-    const insert = cast({
-      ...document,
-      createdAt: ISODate(),
-      updatedAt: ISODate()
-    });
+    const insert = cast(timestamp(document, true));
     return this.collection.insertOne(insert).then(response => response.result);
   }
 
   public insertMany(documents: any[]) {
     ow(documents, ow.array);
-    const insert = documents.map(document => {
-      return cast({
-        ...document,
-        createdAt: ISODate(),
-        updatedAt: ISODate()
-      });
-    });
+    const insert = documents.map(document => cast(timestamp(document, true)));
     return this.collection.insertMany(insert).then(response => response.result);
   }
 }

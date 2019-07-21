@@ -2,7 +2,7 @@ import ow from 'ow';
 import { MongoClient, MongoClientOptions } from 'mongodb';
 import Model from './Model';
 
-enum ConnectionState {
+enum MonglowConnectionState {
   DISCONNECTED = 'DISCONNECTED',
   PENDING = 'PENDING',
   CONNECTED = 'CONNECTED'
@@ -11,7 +11,7 @@ enum ConnectionState {
 class Monglow {
   private urls: string[];
   private options: MongoClientOptions;
-  private state: ConnectionState;
+  private state: MonglowConnectionState;
   private clientPromise!: Promise<MongoClient>;
   private client!: MongoClient;
 
@@ -20,19 +20,19 @@ class Monglow {
     ow(options, ow.object.plain);
     this.urls = Array.isArray(urls) ? urls : [urls];
     this.options = { useNewUrlParser: true, ...options };
-    this.state = ConnectionState.DISCONNECTED;
+    this.state = MonglowConnectionState.DISCONNECTED;
   }
 
   public connect(): Promise<MongoClient> {
-    if (this.state !== ConnectionState.DISCONNECTED) {
+    if (this.state !== MonglowConnectionState.DISCONNECTED) {
       return this.instance;
     }
-    this.state = ConnectionState.PENDING;
+    this.state = MonglowConnectionState.PENDING;
     this.clientPromise = MongoClient.connect(
       this.urls.join(','),
       this.options
     ).then(client => {
-      this.state = ConnectionState.CONNECTED;
+      this.state = MonglowConnectionState.CONNECTED;
       this.client = client;
       return client;
     });
@@ -41,22 +41,22 @@ class Monglow {
 
   public get instance(): Promise<MongoClient> {
     switch (this.state) {
-      case ConnectionState.DISCONNECTED: {
+      case MonglowConnectionState.DISCONNECTED: {
         return this.connect();
       }
-      case ConnectionState.PENDING: {
+      case MonglowConnectionState.PENDING: {
         return this.clientPromise;
       }
-      case ConnectionState.CONNECTED: {
+      case MonglowConnectionState.CONNECTED: {
         return Promise.resolve(this.client);
       }
     }
   }
 
   public async disconnect(): Promise<void> {
-    if (this.state === ConnectionState.CONNECTED) {
+    if (this.state === MonglowConnectionState.CONNECTED) {
       this.client.close();
-      this.state = ConnectionState.DISCONNECTED;
+      this.state = MonglowConnectionState.DISCONNECTED;
     }
   }
 

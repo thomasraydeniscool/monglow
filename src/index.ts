@@ -11,6 +11,8 @@ import {
 import Monglow from './lib/Monglow';
 import Model from './lib/Model';
 
+export * from './lib/utils';
+
 export { Monglow, Model, ObjectId, Timestamp, MinKey, MaxKey, DBRef, Long };
 
 export default (uri: string | string[], options?: MongoClientOptions) => {
