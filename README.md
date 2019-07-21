@@ -3,6 +3,7 @@
 A simple MongoDB wrapper that doesn't get in your way.
 
 - Easy & flexible database setup
+- Command buffering (query without waiting for connection)
 - Auto-casting of `_id` in queries
 - Recording of `createdAt` & `updatedAt`
 - Promises built-in
