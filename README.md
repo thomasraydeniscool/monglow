@@ -13,3 +13,22 @@ A simple MongoDB wrapper that doesn't get in your way.
 ```
 npm i --save monglow
 ```
+
+## Usage
+
+```typescript
+const uri = 'localhost/test';
+const monglow = new Monglow(uri);
+
+const User = new Model('users');
+
+monglow.connect();
+
+monglow.activate(User);
+
+User.find().then(users => {
+  console.log(users);
+});
+
+monglow.disconnect();
+```
