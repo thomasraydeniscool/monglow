@@ -1,16 +1,7 @@
 import ow from 'ow';
-import {
-  Collection,
-  Db,
-  MongoClient,
-  ObjectId,
-  FindOneOptions,
-  Cursor
-} from 'mongodb';
+import { Collection, Db, MongoClient, ObjectId, FindOneOptions } from 'mongodb';
 
-import MonglowResponse from './Response';
 import { ISODate, cast } from './utils';
-import MonglowDocument from './Document';
 
 class Model {
   private _collection!: Collection;
@@ -43,47 +34,23 @@ class Model {
     return this;
   }
 
-  public find(
-    query: any,
-    findOptions: FindOneOptions,
-    options: { rawCursor: true }
-  ): Cursor<any>;
-  public find(
-    query: any,
-    findOptions: FindOneOptions,
-    options: { rawCursor: false }
-  ): Promise<MonglowResponse>;
-  public find(
-    query?: any,
-    findOptions?: FindOneOptions,
-    options?: { rawCursor?: boolean }
-  ): Promise<MonglowResponse>;
-  public find(
-    query = {},
-    findOptions: FindOneOptions = {},
-    options: { rawCursor?: boolean } = {}
-  ) {
+  public find(query = {}, findOptions?: FindOneOptions) {
     ow(query, ow.object.plain);
     ow(findOptions, ow.any(ow.object.plain, ow.undefined));
-    ow(options, ow.any(ow.object.plain, ow.undefined));
     const cursor = this.collection.find(query, findOptions);
-    if (options.rawCursor) {
-      return cursor;
-    }
-    return cursor.toArray().then(data => MonglowResponse.create(data));
+    return cursor.toArray();
   }
 
-  public findOne(filter = {}, options?: FindOneOptions) {
+  public findOne(filter = {}, findOptions?: FindOneOptions) {
     ow(filter, ow.object.plain);
-    ow(options, ow.any(ow.object.plain, ow.undefined));
-    const task = this.collection.findOne(cast(filter), options);
-    return task.then(data => MonglowDocument.create(data));
+    ow(findOptions, ow.any(ow.object.plain, ow.undefined));
+    return this.collection.findOne(cast(filter), findOptions);
   }
 
-  public findById(id: string | ObjectId, options?: FindOneOptions) {
+  public findById(id: string | ObjectId, findOptions?: FindOneOptions) {
     ow(id, ow.any(ow.string, ow.object.instanceOf(ObjectId)));
-    ow(options, ow.any(ow.object.plain, ow.undefined));
-    return this.findOne({ _id: id }, options);
+    ow(findOptions, ow.any(ow.object.plain, ow.undefined));
+    return this.findOne({ _id: id }, findOptions);
   }
 
   public updateOne(filter: any, set: any) {
