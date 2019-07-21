@@ -1,5 +1,6 @@
 import ow from 'ow';
 import { MongoClient, MongoClientOptions } from 'mongodb';
+
 import Model from './Model';
 
 enum MonglowConnectionState {
@@ -12,8 +13,8 @@ class Monglow {
   private urls: string[];
   private options: MongoClientOptions;
   private state: MonglowConnectionState;
-  private clientPromise!: Promise<MongoClient>;
-  private client!: MongoClient;
+  private clientPromise: Promise<MongoClient> | null;
+  private client: MongoClient | null;
 
   constructor(urls: string | string[], options: MongoClientOptions = {}) {
     ow(urls, ow.any(ow.string, ow.array.minLength(1)));
@@ -21,6 +22,18 @@ class Monglow {
     this.urls = Array.isArray(urls) ? urls : [urls];
     this.options = { useNewUrlParser: true, ...options };
     this.state = MonglowConnectionState.DISCONNECTED;
+    this.client = null;
+    this.clientPromise = null;
+  }
+
+  public get instance(): Promise<MongoClient> {
+    if (this.clientPromise && MonglowConnectionState.PENDING) {
+      return this.clientPromise;
+    } else if (this.client && MonglowConnectionState.CONNECTED) {
+      return Promise.resolve(this.client);
+    } else {
+      return this.connect();
+    }
   }
 
   public connect(): Promise<MongoClient> {
@@ -39,25 +52,11 @@ class Monglow {
     return this.clientPromise;
   }
 
-  public get instance(): Promise<MongoClient> {
-    switch (this.state) {
-      case MonglowConnectionState.DISCONNECTED: {
-        return this.connect();
-      }
-      case MonglowConnectionState.PENDING: {
-        return this.clientPromise;
-      }
-      case MonglowConnectionState.CONNECTED: {
-        return Promise.resolve(this.client);
-      }
-    }
-  }
-
   public async disconnect(): Promise<void> {
-    if (this.state === MonglowConnectionState.CONNECTED) {
-      this.client.close();
+    this.instance.then(client => {
+      client.close();
       this.state = MonglowConnectionState.DISCONNECTED;
-    }
+    });
   }
 
   public model(name: string): Model {
