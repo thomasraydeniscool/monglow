@@ -1,4 +1,4 @@
-# Monglow
+# monglow
 
 A simple MongoDB wrapper that doesn't get in your way.
 
@@ -34,3 +34,7 @@ User.find().then(users => {
 
 monglow.disconnect();
 ```
+
+## Coming soon
+
+- Relationships
