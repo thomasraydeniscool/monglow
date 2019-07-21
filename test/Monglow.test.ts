@@ -12,12 +12,15 @@ describe('monglow', () => {
   const monglow = new Monglow(uri);
 
   beforeAll(async () => {
-    await monglow.connect();
+    /**
+     * Command buffering
+     */
+    monglow.connect();
     monglow.activate(model);
   });
 
   afterAll(async () => {
-    await monglow.disconnect();
+    monglow.disconnect();
   });
 
   test('find', async () => {
