@@ -1,4 +1,4 @@
-# monglow
+# Monglow
 
 A simple MongoDB wrapper that doesn't get in your way.
 
@@ -17,6 +17,8 @@ npm i --save monglow
 ## Usage
 
 ```typescript
+import { Monglow, Model } from 'monglow';
+
 const uri = 'localhost/test';
 const monglow = new Monglow(uri);
 
