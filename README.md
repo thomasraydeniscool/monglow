@@ -1,16 +1,14 @@
 # monglow
 
-A simple MongoDB wrapper that provides maximum usability & flexibility.
+A simple MongoDB wrapper that doesn't get in your way.
 
-## Features
-
-- Access to native MongoDB driver
+- Easy & flexible database setup
 - Auto-casting of `_id` in queries
-- Query data defaults
+- Automatic recording of `createdAt` & `updatedAt`
 - Promises built-in
-- Flexible database setup
+- Direct access to native MongoDB driver; and
+- access to monglow utils
 
-## Install
-
-[![NPM](https://nodei.co/npm/monglow.png?compact=true)](https://nodei.co/npm/monglow/)
-
+```
+npm i --save monglow
+```
