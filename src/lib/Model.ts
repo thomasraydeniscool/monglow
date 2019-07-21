@@ -72,7 +72,7 @@ class Model {
   public updateOne(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
-    const update = { $set: timestamp(set) };
+    const update = { $set: timestamp()(set) };
     return this.collection(collection => {
       return collection
         .updateOne(cast(filter), update)
@@ -83,7 +83,7 @@ class Model {
   public updateMany(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
-    const update = { $set: timestamp(set) };
+    const update = { $set: timestamp()(set) };
     return this.collection(collection =>
       collection
         .updateMany(cast(filter), update)
@@ -93,7 +93,7 @@ class Model {
 
   public insertOne(document: any) {
     ow(document, ow.object.plain);
-    const insert = cast(timestamp(document, true));
+    const insert = timestamp({ created: true })(cast(document));
     return this.collection(collection =>
       collection.insertOne(insert).then(response => response.result)
     );
@@ -101,7 +101,7 @@ class Model {
 
   public insertMany(documents: any[]) {
     ow(documents, ow.array);
-    const insert = documents.map(document => cast(timestamp(document, true)));
+    const insert = timestamp({ created: true })(cast(documents));
     return this.collection(collection =>
       collection.insertMany(insert).then(response => response.result)
     );
