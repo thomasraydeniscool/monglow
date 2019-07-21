@@ -2,6 +2,8 @@
   "name": "monglow",
   "version": "2.3.2",
   "description": "A MongoDB ODM designed for NoSQL",
+  "author": "Thomas Rayden",
+  "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
@@ -62,8 +64,6 @@
     "type": "git",
     "url": "git+https://github.com/thomasraydeniscool/monglow.git"
   },
-  "author": "Thomas Rayden",
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/thomasraydeniscool/monglow/issues"
   },
