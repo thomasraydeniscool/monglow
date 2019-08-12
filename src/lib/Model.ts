@@ -118,12 +118,16 @@ class Model {
 
   public deleteOne(filter: any) {
     ow(filter, ow.object.plain);
-    return this.collection(c => c.deleteOne(this.cast(filter)));
+    return this.collection(c =>
+      c.deleteOne(this.cast(filter)).then(response => response.result)
+    );
   }
 
   public deleteMany(filter: any) {
     ow(filter, ow.object.plain);
-    return this.collection(c => c.deleteMany(this.cast(filter)));
+    return this.collection(c =>
+      c.deleteMany(this.cast(filter)).then(response => response.result)
+    );
   }
 }
 
