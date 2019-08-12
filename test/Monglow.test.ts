@@ -75,4 +75,22 @@ describe('monglow', () => {
     const response = await model.insertMany(mockDocuments);
     expect(response.ok).toBeTruthy();
   });
+
+  test('deleteOne', async () => {
+    const mockDocument = createMockDocument();
+    await model.insertOne(mockDocument);
+    const response = await model.deleteOne({
+      _id: mockDocument._id
+    });
+    expect(response.ok).toBeTruthy();
+  });
+
+  test('deleteMany', async () => {
+    const mockDocuments = [createMockDocument(), createMockDocument()];
+    await model.insertMany(mockDocuments);
+    const response = await model.deleteMany({
+      _id: { $in: mockDocuments.map(d => d._id) }
+    });
+    expect(response.ok).toBeTruthy();
+  });
 });
