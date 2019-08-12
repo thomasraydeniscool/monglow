@@ -1,18 +1,30 @@
 import ow from 'ow';
 import { Collection, MongoClient, ObjectId, FindOneOptions } from 'mongodb';
 
-import { cast, timestamp } from './utils';
+import { cast, timestamp, MonglowCastSchema } from './utils';
+
+export interface MonglowModelOptions {
+  cast?: MonglowCastSchema;
+}
 
 class Model {
   private queue: any[];
   private collectionPromise: Promise<Collection> | null;
   private modelName: string;
 
-  constructor(name: string) {
+  private cast: (value: any) => any;
+
+  constructor(name: string, options: MonglowModelOptions = {}) {
     ow(name, ow.string);
+    ow(options, ow.object.plain);
     this.collectionPromise = null;
     this.modelName = name;
     this.queue = [];
+    if (options.cast) {
+      this.cast = (value: any) => cast(value, { schema: options.cast });
+    } else {
+      this.cast = cast;
+    }
   }
 
   get name() {
@@ -37,6 +49,7 @@ class Model {
   public collection(
     action: (collection: Collection) => Promise<any>
   ): Promise<any> {
+    ow(action, ow.function);
     if (this.collectionPromise) {
       return this.collectionPromise.then(action);
     } else {
@@ -46,11 +59,11 @@ class Model {
     }
   }
 
-  public find(query = {}, findOptions?: FindOneOptions) {
-    ow(query, ow.object.plain);
+  public find(filter = {}, findOptions?: FindOneOptions) {
+    ow(filter, ow.object.plain);
     ow(findOptions, ow.any(ow.object.plain, ow.undefined));
-    return this.collection(collection => {
-      const cursor = collection.find(query, findOptions);
+    return this.collection(c => {
+      const cursor = c.find(this.cast(filter), findOptions);
       return cursor.toArray();
     });
   }
@@ -58,9 +71,7 @@ class Model {
   public findOne(filter = {}, findOptions?: FindOneOptions) {
     ow(filter, ow.object.plain);
     ow(findOptions, ow.any(ow.object.plain, ow.undefined));
-    return this.collection(collection =>
-      collection.findOne(cast(filter), findOptions)
-    );
+    return this.collection(c => c.findOne(this.cast(filter), findOptions));
   }
 
   public findById(id: string | ObjectId, findOptions?: FindOneOptions) {
@@ -72,10 +83,10 @@ class Model {
   public updateOne(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
-    const update = { $set: timestamp()(set) };
-    return this.collection(collection => {
-      return collection
-        .updateOne(cast(filter), update)
+    const update = { $set: timestamp(this.cast(set)) };
+    return this.collection(c => {
+      return c
+        .updateOne(this.cast(filter), update)
         .then(response => response.result);
     });
   }
@@ -83,28 +94,36 @@ class Model {
   public updateMany(filter: any, set: any) {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
-    const update = { $set: timestamp()(set) };
-    return this.collection(collection =>
-      collection
-        .updateMany(cast(filter), update)
-        .then(response => response.result)
+    const update = { $set: timestamp(this.cast(set)) };
+    return this.collection(c =>
+      c.updateMany(this.cast(filter), update).then(response => response.result)
     );
   }
 
   public insertOne(document: any) {
     ow(document, ow.object.plain);
-    const insert = timestamp({ created: true })(cast(document));
-    return this.collection(collection =>
-      collection.insertOne(insert).then(response => response.result)
+    const insert = timestamp(this.cast(document), { created: true });
+    return this.collection(c =>
+      c.insertOne(insert).then(response => response.result)
     );
   }
 
   public insertMany(documents: any[]) {
     ow(documents, ow.array);
-    const insert = timestamp({ created: true })(cast(documents));
-    return this.collection(collection =>
-      collection.insertMany(insert).then(response => response.result)
+    const insert = timestamp(this.cast(documents), { created: true });
+    return this.collection(c =>
+      c.insertMany(insert).then(response => response.result)
     );
+  }
+
+  public deleteOne(filter: any) {
+    ow(filter, ow.object.plain);
+    return this.collection(c => c.deleteOne(this.cast(filter)));
+  }
+
+  public deleteMany(filter: any) {
+    ow(filter, ow.object.plain);
+    return this.collection(c => c.deleteMany(this.cast(filter)));
   }
 }
 
