@@ -74,8 +74,12 @@ export function safeId(id?: string | ObjectId) {
   }
   if (ObjectId.isValid(id)) {
     return new ObjectId(id);
-  } else {
+  } else if (typeof id === 'string') {
     return id;
+  } else {
+    throw new TypeError(
+      'Invalid Object provider to safeId must be typeof ObjectId or String'
+    );
   }
 }
 
@@ -89,6 +93,8 @@ export function strictId(id?: string | ObjectId) {
   if (ObjectId.isValid(id)) {
     return new ObjectId(id);
   } else {
-    throw new TypeError('Invalid ObjectId provided to strictId');
+    throw new TypeError(
+      'Invalid ObjectId provided to strictId must be typeof ObjectId'
+    );
   }
 }
