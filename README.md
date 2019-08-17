@@ -4,11 +4,11 @@ A simple MongoDB wrapper that doesn't get in your way.
 
 - Easy & flexible database setup
 - Command buffering (query without waiting for connection)
-- Auto-casting of `_id` in queries
+- Customisable ObjectId casting and auto-casting of `_id`
 - Recording of `createdAt` & `updatedAt`
 - Promises built-in
 - Direct access to native MongoDB driver; and
-- Access to monglow utils
+- Access to internal monglow utils
 
 ```
 npm i --save monglow
@@ -24,6 +24,13 @@ const monglow = new Monglow(uri);
 
 const User = new Model('users');
 
+const Cast = new Model('casts', {
+  cast: {
+    user_id: true, // This will cast to ObjectId
+    test: (value) => value + 'hello!'
+  }
+});
+
 monglow.connect();
 
 monglow.activate(User);
@@ -31,6 +38,17 @@ monglow.activate(User);
 User.find().then(users => {
   console.log(users);
 });
+
+// Direct access to MongoDB driver
+User.collection(c => 
+  c.updateOne(
+    { _id: new ObjectId() },
+    { $set: { hello: 'world!' } },
+    { upsert: true }
+  )
+)
+  .then(() => {})
+  .catch(() => {})
 
 monglow.disconnect();
 ```
