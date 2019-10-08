@@ -1,7 +1,7 @@
 import ow from 'ow';
 import { Collection, MongoClient, ObjectId, FindOneOptions } from 'mongodb';
 
-import { cast, timestamp, MonglowCastSchema } from './utils';
+import { cast, timestamp, MonglowCastSchema, CastFunction } from './utils';
 
 export interface MonglowModelOptions {
   cast?: MonglowCastSchema;
@@ -12,7 +12,8 @@ class Model {
   private collectionPromise: Promise<Collection> | null;
   private modelName: string;
 
-  private cast: (value: any) => any;
+  private cast: CastFunction;
+  private filterCast: CastFunction;
 
   constructor(name: string, options: MonglowModelOptions = {}) {
     ow(name, ow.string);
@@ -21,9 +22,11 @@ class Model {
     this.modelName = name;
     this.queue = [];
     if (options.cast) {
-      this.cast = (value: any) => cast(value, { schema: options.cast });
+      this.cast = cast({ schema: options.cast });
+      this.filterCast = cast({ schema: options.cast, strict: false });
     } else {
-      this.cast = cast;
+      this.cast = cast();
+      this.filterCast = cast({ strict: false });
     }
   }
 
@@ -63,7 +66,7 @@ class Model {
     ow(filter, ow.object.plain);
     ow(findOptions, ow.any(ow.object.plain, ow.undefined));
     return this.collection(c => {
-      const cursor = c.find(this.cast(filter), findOptions);
+      const cursor = c.find(this.filterCast(filter), findOptions);
       return cursor.toArray();
     });
   }
@@ -71,11 +74,16 @@ class Model {
   public findOne(filter = {}, findOptions?: FindOneOptions) {
     ow(filter, ow.object.plain);
     ow(findOptions, ow.any(ow.object.plain, ow.undefined));
-    return this.collection(c => c.findOne(this.cast(filter), findOptions));
+    return this.collection(c =>
+      c.findOne(this.filterCast(filter), findOptions)
+    );
   }
 
   public findById(id: string | ObjectId, findOptions?: FindOneOptions) {
-    ow(id, ow.any(ow.string, ow.object.instanceOf(ObjectId)));
+    ow(
+      id,
+      ow.any(ow.string, ow.object.instanceOf(ObjectId), ow.nullOrUndefined)
+    );
     ow(findOptions, ow.any(ow.object.plain, ow.undefined));
     return this.findOne({ _id: id }, findOptions);
   }
@@ -96,7 +104,9 @@ class Model {
     ow(set, ow.object.plain);
     const update = { $set: timestamp(this.cast(set)) };
     return this.collection(c =>
-      c.updateMany(this.cast(filter), update).then(response => response.result)
+      c
+        .updateMany(this.filterCast(filter), update)
+        .then(response => response.result)
     );
   }
 
@@ -119,14 +129,14 @@ class Model {
   public deleteOne(filter: any) {
     ow(filter, ow.object.plain);
     return this.collection(c =>
-      c.deleteOne(this.cast(filter)).then(response => response.result)
+      c.deleteOne(this.filterCast(filter)).then(response => response.result)
     );
   }
 
   public deleteMany(filter: any) {
     ow(filter, ow.object.plain);
     return this.collection(c =>
-      c.deleteMany(this.cast(filter)).then(response => response.result)
+      c.deleteMany(this.filterCast(filter)).then(response => response.result)
     );
   }
 }
