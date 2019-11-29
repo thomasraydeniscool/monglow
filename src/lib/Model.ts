@@ -7,7 +7,7 @@ export interface MonglowModelOptions {
   cast?: MonglowCastSchema;
 }
 
-class Model {
+class Model<T = any> {
   private queue: any[];
   private collectionPromise: Promise<Collection> | null;
   private modelName: string;
@@ -62,7 +62,7 @@ class Model {
     }
   }
 
-  public find(filter = {}, findOptions?: FindOneOptions) {
+  public find(filter = {}, findOptions?: FindOneOptions): Promise<T[]> {
     ow(filter, ow.object.plain);
     ow(findOptions, ow.any(ow.object.plain, ow.undefined));
     return this.collection(c => {
@@ -71,7 +71,7 @@ class Model {
     });
   }
 
-  public findOne(filter = {}, findOptions?: FindOneOptions) {
+  public findOne(filter = {}, findOptions?: FindOneOptions): Promise<T> {
     ow(filter, ow.object.plain);
     ow(findOptions, ow.any(ow.object.plain, ow.undefined));
     return this.collection(c =>
@@ -79,7 +79,10 @@ class Model {
     );
   }
 
-  public findById(id: string | ObjectId, findOptions?: FindOneOptions) {
+  public findById(
+    id: string | ObjectId,
+    findOptions?: FindOneOptions
+  ): Promise<T> {
     ow(
       id,
       ow.any(ow.string, ow.object.instanceOf(ObjectId), ow.nullOrUndefined)
@@ -88,7 +91,10 @@ class Model {
     return this.findOne({ _id: id }, findOptions);
   }
 
-  public updateOne(filter: any, set: any) {
+  public updateOne(
+    filter: any,
+    set: any
+  ): Promise<{ ok: number; n: number; nModified: number }> {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
     const update = { $set: timestamp(this.cast(set)) };
@@ -99,7 +105,10 @@ class Model {
     });
   }
 
-  public updateMany(filter: any, set: any) {
+  public updateMany(
+    filter: any,
+    set: any
+  ): Promise<{ ok: number; n: number; nModified: number }> {
     ow(filter, ow.object.plain);
     ow(set, ow.object.plain);
     const update = { $set: timestamp(this.cast(set)) };
@@ -110,7 +119,12 @@ class Model {
     );
   }
 
-  public insertOne(document: any) {
+  public insertOne(
+    document: any
+  ): Promise<{
+    ok: number;
+    n: number;
+  }> {
     ow(document, ow.object.plain);
     const insert = timestamp(this.cast(document), { created: true });
     return this.collection(c =>
@@ -118,7 +132,12 @@ class Model {
     );
   }
 
-  public insertMany(documents: any[]) {
+  public insertMany(
+    documents: any[]
+  ): Promise<{
+    ok: number;
+    n: number;
+  }> {
     ow(documents, ow.array);
     const insert = timestamp(this.cast(documents), { created: true });
     return this.collection(c =>
@@ -126,14 +145,24 @@ class Model {
     );
   }
 
-  public deleteOne(filter: any) {
+  public deleteOne(
+    filter: any
+  ): Promise<{
+    ok: number;
+    n: number;
+  }> {
     ow(filter, ow.object.plain);
     return this.collection(c =>
       c.deleteOne(this.filterCast(filter)).then(response => response.result)
     );
   }
 
-  public deleteMany(filter: any) {
+  public deleteMany(
+    filter: any
+  ): Promise<{
+    ok: number;
+    n: number;
+  }> {
     ow(filter, ow.object.plain);
     return this.collection(c =>
       c.deleteMany(this.filterCast(filter)).then(response => response.result)
