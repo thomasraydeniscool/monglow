@@ -9,7 +9,7 @@ export interface MonglowModelOptions {
 
 class Model<T = any> {
   private queue: any[];
-  private collectionPromise: Promise<Collection> | null;
+  private collectionPromise: Promise<Collection<T>> | null;
   private modelName: string;
 
   private cast: CastFunction;
@@ -50,7 +50,7 @@ class Model<T = any> {
   }
 
   public collection(
-    action: (collection: Collection) => Promise<any>
+    action: (collection: Collection<T>) => Promise<any>
   ): Promise<any> {
     ow(action, ow.function);
     if (this.collectionPromise) {
