@@ -5,6 +5,41 @@ export interface MonglowCastSchema {
   [key: string]: MonglowCast | boolean;
 }
 
+export interface MonglowQueueTask<T> {
+  task: (value: T) => any;
+  resolve: (value?: any) => void;
+  reject: (value?: any) => void;
+}
+
+export function promiseOrQueue<T>(
+  task: (value: T) => any,
+  queue: Array<MonglowQueueTask<T>>,
+  promise?: Promise<T>
+): { promise: Promise<any>; queue: Array<MonglowQueueTask<T>> } {
+  const newQueue = [...queue];
+  if (promise) {
+    const taskPromise = promise.then(value => {
+      return Promise.resolve(task(value));
+    });
+    return { promise: taskPromise, queue: newQueue };
+  } else {
+    const queuePromise = new Promise<any>((resolve, reject) => {
+      newQueue.push({ task, resolve, reject });
+    });
+    return { promise: queuePromise, queue: newQueue };
+  }
+}
+
+export function resolveQueue<T>(queue: Array<MonglowQueueTask<T>>, value: T) {
+  return Promise.all(
+    queue.map(({ task, resolve, reject }) => {
+      return Promise.resolve(task(value))
+        .then(resolve)
+        .catch(reject);
+    })
+  );
+}
+
 export type CastFunction = (document: any | any[]) => any;
 
 export const getCastFunction = (
