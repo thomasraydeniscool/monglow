@@ -7,16 +7,14 @@ export interface MonglowCastSchema {
 
 export type CastFunction = (document: any | any[]) => any;
 
-export const ISODate = () => new Date(new Date().toISOString());
-
-export const cast = (
-  options: { strict?: boolean; schema?: MonglowCastSchema } = {}
+export const getCastFunction = (
+  opt: { strict?: boolean; schema?: MonglowCastSchema } = {}
 ): CastFunction => {
   return (document: any | any[]) => {
     if (Array.isArray(document)) {
-      return document.map(cast(options));
+      return document.map(getCastFunction(opt));
     } else if (typeof document === 'object') {
-      const { strict = true, schema = {} } = options;
+      const { strict = true, schema = {} } = opt;
       const result = { ...document };
       const keys = ['_id', ...Object.keys(schema)];
       Object.keys(result).forEach(d => {
@@ -25,7 +23,7 @@ export const cast = (
           if (typeof castFunc === 'function') {
             result[d] = castFunc(result[d]);
           } else if (castFunc !== false) {
-            result[d] = deepCast(result[d], strict);
+            result[d] = automaticCast(result[d], { strict });
           }
         }
       });
@@ -38,14 +36,23 @@ export const cast = (
 
 export const timestamp = (
   document: any | any[],
-  options: { created?: boolean } = {}
+  opt: {
+    created?: boolean;
+    createdProperty?: string;
+    updatedProperty?: string;
+  } = {}
 ): any => {
+  const {
+    created = false,
+    createdProperty = '_created',
+    updatedProperty = '_updated'
+  } = opt;
   if (Array.isArray(document)) {
-    return document.map(d => timestamp(d, options));
+    return document.map(d => timestamp(d, opt));
   } else if (typeof document === 'object') {
-    const result = { ...document, updatedAt: ISODate() };
-    if (options.created) {
-      result.createdAt = ISODate();
+    const result = { ...document, [updatedProperty]: new Date() };
+    if (created) {
+      result[createdProperty] = new Date();
     }
     return result;
   } else {
@@ -53,7 +60,8 @@ export const timestamp = (
   }
 };
 
-export function deepCast(value: any, strict: boolean = true) {
+export function automaticCast(value: any, opt: { strict?: boolean } = {}) {
+  const { strict = true } = opt;
   const operators = { array: ['$in', '$nin'], string: ['$ne'] };
   if (typeof value === 'object') {
     const copy = { ...value };
