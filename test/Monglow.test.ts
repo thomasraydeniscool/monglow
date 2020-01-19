@@ -1,4 +1,5 @@
-import { Model, Monglow, ObjectId } from '../src';
+import { ObjectId } from 'mongodb';
+import { Model, Monglow } from '../src';
 
 declare const global: any;
 
@@ -20,13 +21,13 @@ describe('monglow', () => {
   });
 
   afterAll(async () => {
-    monglow.disconnect();
+    monglow.close();
   });
 
   test('find', async () => {
     const mockDocument = createMockDocument();
     await model.insertOne(mockDocument);
-    const response = await model.find();
+    const response = await model.find({});
     expect(response).toHaveLength(1);
   });
 
@@ -51,7 +52,7 @@ describe('monglow', () => {
       { _id: mockDocument._id },
       { hello: 'world' }
     );
-    expect(response.ok).toBeTruthy();
+    expect(response.result.ok).toBeTruthy();
   });
 
   test('updateMany', async () => {
@@ -61,19 +62,19 @@ describe('monglow', () => {
       { _id: { $in: mockDocuments.map(d => d._id) } },
       { hello: 'world' }
     );
-    expect(response.ok).toBeTruthy();
+    expect(response.result.ok).toBeTruthy();
   });
 
   test('insertOne', async () => {
     const mockDocument = createMockDocument();
     const response = await model.insertOne(mockDocument);
-    expect(response.ok).toBeTruthy();
+    expect(response.result.ok).toBeTruthy();
   });
 
   test('insertMany', async () => {
     const mockDocuments = [createMockDocument(), createMockDocument()];
     const response = await model.insertMany(mockDocuments);
-    expect(response.ok).toBeTruthy();
+    expect(response.result.ok).toBeTruthy();
   });
 
   test('deleteOne', async () => {
@@ -82,7 +83,7 @@ describe('monglow', () => {
     const response = await model.deleteOne({
       _id: mockDocument._id
     });
-    expect(response.ok).toBeTruthy();
+    expect(response.result.ok).toBeTruthy();
   });
 
   test('deleteMany', async () => {
@@ -91,6 +92,6 @@ describe('monglow', () => {
     const response = await model.deleteMany({
       _id: { $in: mockDocuments.map(d => d._id) }
     });
-    expect(response.ok).toBeTruthy();
+    expect(response.result.ok).toBeTruthy();
   });
 });
