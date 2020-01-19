@@ -9,6 +9,7 @@ A simple MongoDB wrapper that doesn't get in your way.
 - Promises built-in
 - Direct access to native MongoDB driver; and
 - Access to internal Monglow utils
+- Serverless friendly
 
 ```
 npm i --save monglow
