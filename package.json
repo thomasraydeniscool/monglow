@@ -1,6 +1,6 @@
 {
   "name": "monglow",
-  "version": "3.2.2",
+  "version": "3.3.0",
   "description": "A MongoDB ODM designed for NoSQL",
   "author": "Thomas Rayden",
   "license": "MIT",
