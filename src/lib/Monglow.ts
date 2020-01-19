@@ -16,12 +16,15 @@ class Monglow {
     return this.clientPromise;
   }
 
+  private connected: boolean;
+
   private urls: string[];
   private options: MongoClientOptions;
 
   constructor(urls: string | string[], options: MonglowClientOptions = {}) {
     ow(urls, ow.any(ow.string, ow.array.ofType(ow.string).minLength(1)));
     ow(options, ow.object.plain);
+    this.connected = false;
     this.monglowEmitter = new EventEmitter2();
     this.clientPromise = new Promise(resolve => {
       this.monglowEmitter.on('client', resolve);
@@ -32,22 +35,28 @@ class Monglow {
   }
 
   public connect() {
-    const mongodb = MongoClient.connect(this.urls.join(','), this.options);
-    mongodb.then(client => {
-      this.monglowEmitter.emit('client', client);
-    });
+    if (this.connected !== true) {
+      this.connected = true;
+      const mongodb = MongoClient.connect(this.urls.join(','), this.options);
+      mongodb.then(client => {
+        this.monglowEmitter.emit('client', client);
+      });
+    }
     return this.client;
   }
 
   public close() {
-    return this.client.then(client => {
-      client.close();
-    });
+    return this.client.then(client => client.close());
   }
 
   public activate(model: Model): Model {
     ow(model, ow.object.instanceOf(Model));
-    return model.init(this.connect());
+    return model.init(this.client);
+  }
+
+  public connectAndActivate(model: Model): Model {
+    this.connect();
+    return this.activate(model);
   }
 }
 
