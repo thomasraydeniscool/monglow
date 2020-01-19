@@ -7,7 +7,7 @@ A simple MongoDB wrapper that doesn't get in your way.
 - Customizable ObjectId casting and auto-casting of `_id`
 - Recording of `_created` & `_updated`
 - Promises built-in
-- Direct access to native MongoDB driver; and
+- Direct access to native MongoDB driver
 - Access to internal Monglow utils
 - Serverless friendly
 
