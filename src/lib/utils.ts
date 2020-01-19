@@ -1,51 +1,20 @@
 import { ObjectId } from 'mongodb';
 
-export type MonglowCast = (value: any) => any;
+export type MonglowCustomCast = (value: any) => any;
 export interface MonglowCastSchema {
-  [key: string]: MonglowCast | boolean;
+  [key: string]: MonglowCustomCast | boolean;
 }
 
-export interface MonglowQueueTask<T> {
-  task: (value: T) => any;
-  resolve: (value?: any) => void;
-  reject: (value?: any) => void;
+export type MonglowCastFunction = (document: any) => any;
+export interface MonglowCastOptions {
+  strict?: boolean;
+  schema?: MonglowCastSchema;
 }
-
-export function promiseOrQueue<T>(
-  task: (value: T) => any,
-  queue: Array<MonglowQueueTask<T>>,
-  promise?: Promise<T>
-): { promise: Promise<any>; queue: Array<MonglowQueueTask<T>> } {
-  const newQueue = [...queue];
-  if (promise) {
-    const taskPromise = promise.then(value => {
-      return Promise.resolve(task(value));
-    });
-    return { promise: taskPromise, queue: newQueue };
-  } else {
-    const queuePromise = new Promise<any>((resolve, reject) => {
-      newQueue.push({ task, resolve, reject });
-    });
-    return { promise: queuePromise, queue: newQueue };
-  }
-}
-
-export function resolveQueue<T>(queue: Array<MonglowQueueTask<T>>, value: T) {
-  return Promise.all(
-    queue.map(({ task, resolve, reject }) => {
-      return Promise.resolve(task(value))
-        .then(resolve)
-        .catch(reject);
-    })
-  );
-}
-
-export type CastFunction = (document: any | any[]) => any;
 
 export const getCastFunction = (
-  opt: { strict?: boolean; schema?: MonglowCastSchema } = {}
-): CastFunction => {
-  return (document: any | any[]) => {
+  opt: MonglowCastOptions = {}
+): MonglowCastFunction => {
+  const func: MonglowCastFunction = document => {
     if (Array.isArray(document)) {
       return document.map(getCastFunction(opt));
     } else if (typeof document === 'object') {
@@ -67,32 +36,47 @@ export const getCastFunction = (
       return document;
     }
   };
+  return func;
 };
 
-export const timestamp = (
-  document: any | any[],
-  opt: {
-    created?: boolean;
-    createdProperty?: string;
-    updatedProperty?: string;
-  } = {}
-): any => {
-  const {
-    created = false,
-    createdProperty = '_created',
-    updatedProperty = '_updated'
-  } = opt;
-  if (Array.isArray(document)) {
-    return document.map(d => timestamp(d, opt));
-  } else if (typeof document === 'object') {
-    const result = { ...document, [updatedProperty]: new Date() };
-    if (created) {
-      result[createdProperty] = new Date();
+export type MonglowTimestampFunction = (
+  document: any,
+  created?: boolean
+) => any;
+
+export interface MonglowTimestampOptions {
+  createdProperty?: string;
+  updatedProperty?: string;
+}
+
+export const getTimestampFunction = (
+  opt: MonglowTimestampOptions = {}
+): MonglowTimestampFunction => {
+  const { createdProperty = '_created', updatedProperty = '_updated' } = opt;
+  const func: MonglowTimestampFunction = (
+    document: any | any[],
+    created: boolean = false
+  ): any | any[] => {
+    if (Array.isArray(document)) {
+      return document.map(d => func(d));
+    } else if (typeof document === 'object') {
+      const result = { ...document, [updatedProperty]: new Date() };
+      if (created) {
+        result[createdProperty] = new Date();
+      }
+      return result;
+    } else {
+      return document;
     }
-    return result;
-  } else {
-    return document;
-  }
+  };
+  return func;
+};
+
+export const getDummyCastFunction = ():
+  | MonglowCastFunction
+  | MonglowTimestampFunction => {
+  const func: MonglowCastFunction = value => value;
+  return func;
 };
 
 export function automaticCast(value: any, opt: { strict?: boolean } = {}) {
@@ -125,14 +109,6 @@ export function lazyId(id: any) {
     return id;
   }
 }
-
-/**
- * safeId
- *
- * Depreciated due to poor name
- * @deprecated use lazyId
- */
-export const safeId = lazyId;
 
 /**
  * strictId

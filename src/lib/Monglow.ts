@@ -2,48 +2,52 @@ import ow from 'ow';
 import { MongoClient, MongoClientOptions } from 'mongodb';
 
 import Model from './Model';
-import { MonglowQueueTask, promiseOrQueue } from './utils';
+import { EventEmitter2 } from 'eventemitter2';
+
+export interface MonglowClientOptions {
+  nativeOptions?: MongoClientOptions;
+}
 
 class Monglow {
-  private queue: Array<MonglowQueueTask<MongoClient>>;
+  private monglowEmitter: EventEmitter2;
+
+  private clientPromise: Promise<MongoClient>;
+  public get client() {
+    return this.clientPromise;
+  }
+
   private urls: string[];
   private options: MongoClientOptions;
-  private clientPromise?: Promise<MongoClient>;
 
-  constructor(urls: string | string[], options: MongoClientOptions = {}) {
-    ow(urls, ow.any(ow.string, ow.array.minLength(1)));
+  constructor(urls: string | string[], options: MonglowClientOptions = {}) {
+    ow(urls, ow.any(ow.string, ow.array.ofType(ow.string).minLength(1)));
     ow(options, ow.object.plain);
-    this.queue = [];
+    this.monglowEmitter = new EventEmitter2();
+    this.clientPromise = new Promise(resolve => {
+      this.monglowEmitter.on('client', resolve);
+    });
     this.urls = Array.isArray(urls) ? urls : [urls];
-    this.options = { useNewUrlParser: true, ...options };
+    const { nativeOptions = {} } = options;
+    this.options = { useNewUrlParser: true, ...nativeOptions };
   }
 
-  public init() {
-    if (this.clientPromise) {
-      return this.clientPromise;
-    }
-    const clientPromise = MongoClient.connect(
-      this.urls.join(','),
-      this.options
-    );
-    this.clientPromise = clientPromise;
-    return clientPromise;
+  public connect() {
+    const mongodb = MongoClient.connect(this.urls.join(','), this.options);
+    mongodb.then(client => {
+      this.monglowEmitter.emit('client', client);
+    });
+    return this.client;
   }
 
-  public exec(task: (client: MongoClient) => any): Promise<any> {
-    ow(task, ow.function);
-    const { promise, queue } = promiseOrQueue(
-      task,
-      this.queue,
-      this.clientPromise
-    );
-    this.queue = queue;
-    return promise;
+  public close() {
+    return this.client.then(client => {
+      client.close();
+    });
   }
 
   public activate(model: Model): Model {
     ow(model, ow.object.instanceOf(Model));
-    return model.init(this.init());
+    return model.init(this.connect());
   }
 }
 
