@@ -1,7 +1,5 @@
-import Monglow, { MonglowClientOptions } from './lib/Monglow';
-import Model from './lib/Model';
-
-export * from './lib/utils';
+import { Monglow, MonglowClientOptions } from './lib/Monglow';
+import { Model } from './lib/Model';
 
 export { Monglow, Model };
 

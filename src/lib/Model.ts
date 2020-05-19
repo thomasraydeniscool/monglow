@@ -10,191 +10,117 @@ import {
   CollectionInsertManyOptions,
   CommonOptions,
   UpdateOneOptions,
-  FilterQuery
+  FilterQuery,
+  UpdateQuery,
+  OptionalId
 } from 'mongodb';
 
-import {
-  getCastFunction,
-  MonglowCastFunction,
-  getTimestampFunction,
-  MonglowTimestampOptions,
-  MonglowCastOptions,
-  getDummyCastFunction,
-  MonglowTimestampFunction
-} from './utils';
+export interface MonglowModelOptions {}
 
-export interface MonglowModelOptions {
-  description?: string;
-  cast?: boolean;
-  castOptions?: MonglowCastOptions;
-  filterCastOptions?: MonglowCastOptions;
-  timestamp?: boolean;
-  timestampOptions?: MonglowTimestampOptions;
-}
-
-class Model<T = any> {
+export class Model<T extends { [key: string]: any } = any> {
   private modelEmitter: EventEmitter2;
 
   private collectionName: string;
   public get name() {
     return this.collectionName;
   }
+
   private collectionPromise: Promise<Collection<T>>;
   public get collection(): Promise<Collection<T>> {
     return this.collectionPromise;
   }
-  private _description?: string;
-  public get description() {
-    return this._description;
-  }
-
-  private castFunc: MonglowCastFunction;
-  private filterCastFunc: MonglowCastFunction;
-  private timestampFunc: MonglowTimestampFunction;
 
   constructor(name: string, options: MonglowModelOptions = {}) {
     ow(name, ow.string);
     ow(options, ow.object.plain);
+
     this.modelEmitter = new EventEmitter2();
+
     this.collectionName = name;
+
     this.collectionPromise = new Promise(resolve => {
       this.modelEmitter.on('collection', resolve);
     });
-    const { cast = true, timestamp = true, description } = options;
-    this._description = description;
-    if (cast) {
-      const {
-        castOptions = { strict: true },
-        filterCastOptions = { strict: false }
-      } = options;
-      this.castFunc = getCastFunction(castOptions);
-      this.filterCastFunc = getCastFunction(filterCastOptions);
-    } else {
-      this.castFunc = getDummyCastFunction();
-      this.filterCastFunc = getDummyCastFunction();
-    }
-    if (timestamp) {
-      const { timestampOptions = {} } = options;
-      this.timestampFunc = getTimestampFunction(timestampOptions);
-    } else {
-      this.timestampFunc = getDummyCastFunction();
-    }
   }
 
   public init(clientPromise: Promise<MongoClient>) {
     ow(clientPromise, ow.promise);
+
     clientPromise.then(client => {
       this.modelEmitter.emit(
         'collection',
         client.db().collection(this.collectionName)
       );
     });
+
     return this;
   }
 
   public find(filter: FilterQuery<T>, options?: FindOneOptions) {
-    ow(filter, ow.object.plain);
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
     return this.collection.then(c => {
-      const cursor = c.find(this.filterCastFunc(filter), options);
+      const cursor = c.find(filter, options);
       return cursor.toArray();
     });
   }
 
   public findOne(filter: FilterQuery<T>, options?: FindOneOptions) {
-    ow(filter, ow.object.plain);
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    return this.collection.then(c =>
-      c.findOne(this.filterCastFunc(filter), options)
-    );
+    return this.collection.then(c => c.findOne(filter, options));
   }
 
   public findById(id: string | ObjectId, options?: FindOneOptions) {
-    ow(id, ow.any(ow.string, ow.object.instanceOf(ObjectId)));
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    return this.findOne({ _id: id }, options);
+    return this.findOne({ _id: new ObjectId(id) } as any, options);
   }
 
   public updateOne(
     filter: FilterQuery<T>,
-    $set: Partial<T> | { [key: string]: any },
+    update: UpdateQuery<T> | Partial<T>,
     options?: UpdateOneOptions
   ) {
-    ow(filter, ow.object.plain);
-    ow($set, ow.object.plain);
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    const update = { $set: this.timestampFunc(this.castFunc($set)) };
-    return this.collection.then(c =>
-      c.updateOne(this.filterCastFunc(filter), update)
-    );
+    return this.collection.then(c => c.updateOne(filter, update, options));
   }
 
   public updateById(
     id: string | ObjectId,
-    $set: Partial<T> | { [key: string]: any },
+    update: UpdateQuery<T> | Partial<T>,
     options?: UpdateOneOptions
   ) {
-    ow(id, ow.any(ow.string, ow.object.instanceOf(ObjectId)));
-    ow($set, ow.object.plain);
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    return this.updateOne({ _id: id }, $set, options);
+    return this.updateOne({ _id: new ObjectId(id) } as any, update, options);
   }
 
   public updateMany(
     filter: FilterQuery<T>,
-    $set: Partial<T> | { [key: string]: any },
+    update: UpdateQuery<T> | Partial<T>,
     options?: UpdateManyOptions
   ) {
-    ow(filter, ow.object.plain);
-    ow($set, ow.object.plain);
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    const update = { $set: this.timestampFunc(this.castFunc($set)) };
-    return this.collection.then(c =>
-      c.updateMany(this.filterCastFunc(filter), update, options)
-    );
+    return this.collection.then(c => c.updateMany(filter, update, options));
   }
 
-  public insertOne(document: any, options?: CollectionInsertOneOptions) {
-    ow(document, ow.object.plain);
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    const insert = this.timestampFunc(this.castFunc(document), true);
-    return this.collection.then(c => c.insertOne(insert, options));
+  public insertOne(docs: OptionalId<T>, options?: CollectionInsertOneOptions) {
+    return this.collection.then(c => c.insertOne(docs, options));
   }
 
-  public insertMany(documents: any[], options?: CollectionInsertManyOptions) {
-    ow(documents, ow.array.ofType(ow.object.plain));
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    const insert = this.timestampFunc(this.castFunc(documents), true);
-    return this.collection.then(c => c.insertMany(insert, options));
+  public insertMany(
+    docs: OptionalId<T>[],
+    options?: CollectionInsertManyOptions
+  ) {
+    return this.collection.then(c => c.insertMany(docs, options));
   }
 
   public deleteOne(
     filter: FilterQuery<T>,
     options?: CommonOptions & { bypassDocumentValidation?: boolean }
   ) {
-    ow(filter, ow.object.plain);
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    return this.collection.then(c =>
-      c.deleteOne(this.filterCastFunc(filter), options)
-    );
+    return this.collection.then(c => c.deleteOne(filter, options));
   }
 
   public deleteById(
     id: string | ObjectId,
     options?: CommonOptions & { bypassDocumentValidation?: boolean }
   ) {
-    ow(id, ow.any(ow.string, ow.object.instanceOf(ObjectId)));
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    return this.deleteOne({ _id: id }, options);
+    return this.deleteOne({ _id: new ObjectId(id) } as any, options);
   }
 
   public deleteMany(filter: FilterQuery<T>, options?: CommonOptions) {
-    ow(filter, ow.object.plain);
-    ow(options, ow.any(ow.object.plain, ow.nullOrUndefined));
-    return this.collection.then(c =>
-      c.deleteMany(this.filterCastFunc(filter), options)
-    );
+    return this.collection.then(c => c.deleteMany(filter, options));
   }
 }
-
-export default Model;

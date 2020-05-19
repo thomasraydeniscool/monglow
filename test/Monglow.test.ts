@@ -1,7 +1,9 @@
 import { ObjectId } from 'mongodb';
 import { Model, Monglow } from '../src';
 
-declare const global: any;
+const global = {
+  __MONGO_URI__: 'localhost/test'
+};
 
 function createMockDocument() {
   return { _id: new ObjectId() };
