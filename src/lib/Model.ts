@@ -11,8 +11,8 @@ import {
   CommonOptions,
   UpdateOneOptions,
   FilterQuery,
-  UpdateQuery,
-  OptionalId
+  OptionalId,
+  MatchKeysAndValues
 } from 'mongodb';
 
 export interface MonglowModelOptions {}
@@ -56,6 +56,9 @@ export class Model<T extends { [key: string]: any } = any> {
     return this;
   }
 
+  /**
+   * Find
+   */
   public find(filter: FilterQuery<T>, options?: FindOneOptions) {
     return this.collection.then(c => {
       const cursor = c.find(filter, options);
@@ -71,30 +74,40 @@ export class Model<T extends { [key: string]: any } = any> {
     return this.findOne({ _id: new ObjectId(id) } as any, options);
   }
 
+  /**
+   * Update
+   */
+  public updateMany(
+    filter: FilterQuery<T>,
+    set: MatchKeysAndValues<T>,
+    options?: UpdateManyOptions
+  ) {
+    return this.collection.then(c =>
+      c.updateMany(filter, { $set: set }, options)
+    );
+  }
+
   public updateOne(
     filter: FilterQuery<T>,
-    update: UpdateQuery<T> | Partial<T>,
+    set: MatchKeysAndValues<T>,
     options?: UpdateOneOptions
   ) {
-    return this.collection.then(c => c.updateOne(filter, update, options));
+    return this.collection.then(c =>
+      c.updateOne(filter, { $set: set }, options)
+    );
   }
 
   public updateById(
     id: string | ObjectId,
-    update: UpdateQuery<T> | Partial<T>,
+    set: MatchKeysAndValues<T>,
     options?: UpdateOneOptions
   ) {
-    return this.updateOne({ _id: new ObjectId(id) } as any, update, options);
+    return this.updateOne({ _id: new ObjectId(id) } as any, set, options);
   }
 
-  public updateMany(
-    filter: FilterQuery<T>,
-    update: UpdateQuery<T> | Partial<T>,
-    options?: UpdateManyOptions
-  ) {
-    return this.collection.then(c => c.updateMany(filter, update, options));
-  }
-
+  /**
+   * Insert
+   */
   public insertOne(docs: OptionalId<T>, options?: CollectionInsertOneOptions) {
     return this.collection.then(c => c.insertOne(docs, options));
   }
@@ -104,6 +117,13 @@ export class Model<T extends { [key: string]: any } = any> {
     options?: CollectionInsertManyOptions
   ) {
     return this.collection.then(c => c.insertMany(docs, options));
+  }
+
+  /**
+   * Delete
+   */
+  public deleteMany(filter: FilterQuery<T>, options?: CommonOptions) {
+    return this.collection.then(c => c.deleteMany(filter, options));
   }
 
   public deleteOne(
@@ -118,9 +138,5 @@ export class Model<T extends { [key: string]: any } = any> {
     options?: CommonOptions & { bypassDocumentValidation?: boolean }
   ) {
     return this.deleteOne({ _id: new ObjectId(id) } as any, options);
-  }
-
-  public deleteMany(filter: FilterQuery<T>, options?: CommonOptions) {
-    return this.collection.then(c => c.deleteMany(filter, options));
   }
 }
