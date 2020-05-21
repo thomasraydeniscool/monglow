@@ -1,6 +1,6 @@
 {
   "name": "monglow",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "A simple MongoDB wrapper that doesn't get in your way",
   "author": "Thomas Rayden",
   "license": "MIT",
